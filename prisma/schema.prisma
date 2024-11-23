@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String    @id @default(cuid())
+  sessionToken String    @unique
+  userId       String
+  expires      DateTime?
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Genre {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+}
+
+model User {
+  id              String            @id @default(cuid())
+  email           String            @unique
+  password        String?
+  createdAt       DateTime          @default(now())
+  username        String?           @unique
+  emailVerified   DateTime?
+  image           String?
+  name            String?
+  updatedAt       DateTime          @updatedAt
+  role            UserRole          @default(USER)
+  accounts        Account[]
+  notes           Note[]
+  recommendations RecommendedBook[]
+  sessions        Session[]
+  userBooks       UserBook[]
+  genres          UserGenre[]
+  userHistories   UserHistory[]
+}
+
+model UserBook {
+  id          Int      @id @default(autoincrement())
+  readDate    DateTime @default(now())
+  userId      String
+  bookId      String?
+  rating      Int?
+  url         String?
+  author      String?
+  cover_image String?
+  title       String?
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Note {
+  id          String   @id @default(cuid())
+  name        String
+  createdAt   DateTime @default(now())
+  editorState String?
+  fileUrl     String?
+  fileName    String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model AllBooks {
+  book_id          BigInt            @id @default(autoincrement())
+  title            String?
+  ratings          BigInt?
+  url              String?
+  cover_image      String?
+  mod_title        String?
+  userHistories    UserHistory[]
+  recommendedBooks RecommendedBook[]
+}
+
+model UserHistory {
+  id       Int      @id @default(autoincrement())
+  readDate DateTime @default(now())
+  userId   String
+  book_Id  BigInt
+  rating   BigInt?
+  books    AllBooks @relation(fields: [book_Id], references: [book_id])
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, book_Id])
+}
+
+model VerificationToken {
+  identifier String
+  token      String    @unique
+  expires    DateTime?
+  id         String    @id @default(cuid())
+
+  @@unique([identifier, token])
+}
+
+model UserGenre {
+  id     Int    @id @default(autoincrement())
+  name   String
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([name, userId])
+}
+
+model RecommendedBook {
+  id      Int      @id @default(autoincrement())
+  userId  String
+  book_id BigInt
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book    AllBooks @relation(fields: [book_id], references: [book_id], onDelete: Cascade)
+}
+
+model PopularBook {
+  book_id     Int      @id @unique
+  title       String
+  url         String
+  genre       String
+  author      String
+  cover_image String
+  createdAt   DateTime @default(now())
+  ratings     Float
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+
+enum UserRole {
+  ADMIN
+  USER
+}
