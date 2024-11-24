@@ -57,7 +57,7 @@ Click the image above to watch the demo video!
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo/book-hub.git
+   git clone https://github.com/VishwamDhavale/Bookhub_Final_Year_Project_Public
    cd book-hub
    ```
 
